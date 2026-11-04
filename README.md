@@ -48,3 +48,9 @@ node tests/hand-position.mjs
 - `tests/`: regression tests
 
 Three.js license is included at `static/vendor/THREE-LICENSE.txt`. Python dependencies retain their respective licenses. Personal photos, local reference measurements, exports, and virtual environments are not included.
+
+## Photo and manual Grip Generator
+
+The latest local browser app is in [photo-grip-studio/](photo-grip-studio/). Open `photo-grip-studio/index.html` in a browser, or serve that folder with `python3 -m http.server 8766` and visit http://localhost:8766. It includes photo-based and manual hand measurements, source-grip deformation, a 3D preview, STL download, and a separate calibration editor.
+
+See the [development report](photo-grip-studio/IMPROVEMENTS_REPORT.md) for provenance, verification, and known mesh limitations. This experimental app currently generates right-hand grips only.
