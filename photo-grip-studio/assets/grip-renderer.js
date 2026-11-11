@@ -29,17 +29,21 @@ const sparse=[];for(let i=0;i<mesh.length;i+=12)for(let j=0;j<36;j++)sparse.push
 const result={surface:upload(data),edges:upload(new Float32Array(sparse)),colors:upload(colors),count:mesh.length*3,edgeCount:sparse.length/6};cache.set(mesh,result);return result;}
 let lastCurrent=null,lastBuffers=null,baselineMesh=null,baselineCenter=null,handSide="right";
 function release(entry){if(entry){gl.deleteBuffer(entry.surface);gl.deleteBuffer(entry.edges);gl.deleteBuffer(entry.colors);}}
-return {draw(base,current,yaw,pitch,center,size,showBaseline,showRegions,separate,side){
+// Optional view settings: zoom factor and a per-vertex tint array (9 floats per triangle).
+let tintSource=null,tintBuffer=null;
+return {draw(base,current,yaw,pitch,center,size,showBaseline,showRegions,separate,side,options){
+const zoom=(options&&options.zoom)||1,tint=(options&&options.tint)||null;
+if(tint!==tintSource){if(tintBuffer)gl.deleteBuffer(tintBuffer);tintBuffer=null;tintSource=tint;if(tint){tintBuffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,tintBuffer);gl.bufferData(gl.ARRAY_BUFFER,tint,gl.STATIC_DRAW);}}
 if(baselineMesh!==base||handSide!==(side||'right')){
 if(lastCurrent){release(lastBuffers);cache.delete(lastCurrent);}if(baselineMesh&&baselineMesh!==lastCurrent){release(cache.get(baselineMesh));cache.delete(baselineMesh);}
 baselineMesh=base;baselineCenter=center.slice();handSide=side||'right';lastCurrent=null;lastBuffers=null;
 }
 const w=canvas.clientWidth,h=canvas.clientHeight,dpr=Math.min(window.devicePixelRatio||1,2);if(canvas.width!==Math.round(w*dpr)||canvas.height!==Math.round(h*dpr)){canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);}gl.viewport(0,0,canvas.width,canvas.height);gl.clearColor(.94,.96,.95,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);
-const span=Math.max(...size),scale=Math.min(w,h)*.72/span;gl.uniform1f(uniforms.fit,separate?.55:1);gl.uniform1f(uniforms.offset,separate?.46:0);gl.uniform1f(uniforms.regions,showRegions?1:0);gl.uniform3fv(uniforms.center,center);gl.uniform4f(uniforms.rotation,Math.cos(yaw),Math.sin(yaw),Math.cos(pitch),Math.sin(pitch));gl.uniform3f(uniforms.projection,scale*2/w,scale*2/h,1/(span*2));
+const span=Math.max(...size),scale=Math.min(w,h)*.72/span*zoom;gl.uniform1f(uniforms.fit,separate?.55:1);gl.uniform1f(uniforms.offset,separate?.46:0);gl.uniform1f(uniforms.regions,(showRegions||tintBuffer)?1:0);gl.uniform3fv(uniforms.center,center);gl.uniform4f(uniforms.rotation,Math.cos(yaw),Math.sin(yaw),Math.cos(pitch),Math.sin(pitch));gl.uniform3f(uniforms.projection,scale*2/w,scale*2/h,1/(span*2));
 // Keep only the current GPU buffers plus the fixed baseline.
 if(current!==lastCurrent){if(lastCurrent&&lastCurrent!==base){release(lastBuffers);cache.delete(lastCurrent);}lastCurrent=current;lastBuffers=buffers(current);}
 function bind(buffer){gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.enableVertexAttribArray(pos);gl.vertexAttribPointer(pos,3,gl.FLOAT,false,24,0);gl.enableVertexAttribArray(normal);gl.vertexAttribPointer(normal,3,gl.FLOAT,false,24,12);}
-gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.disable(gl.BLEND);bind(lastBuffers.surface);gl.bindBuffer(gl.ARRAY_BUFFER,lastBuffers.colors);gl.enableVertexAttribArray(tintLocation);gl.vertexAttribPointer(tintLocation,3,gl.FLOAT,false,12,0);gl.uniform4f(uniforms.color,.25,.68,.57,1);gl.uniform1f(uniforms.surface,1);gl.drawArrays(gl.TRIANGLES,0,lastBuffers.count);
-if(showBaseline){const original=buffers(base);gl.disable(gl.DEPTH_TEST);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);bind(original.edges);gl.disableVertexAttribArray(tintLocation);gl.vertexAttrib3f(tintLocation,0,0,0);gl.uniform1f(uniforms.offset,separate?-.46:0);gl.uniform4f(uniforms.color,.95,.42,.06,.65);gl.uniform1f(uniforms.surface,0);gl.drawArrays(gl.LINES,0,original.edgeCount);gl.disable(gl.BLEND);}
+gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.disable(gl.BLEND);bind(lastBuffers.surface);gl.bindBuffer(gl.ARRAY_BUFFER,tintBuffer||lastBuffers.colors);gl.enableVertexAttribArray(tintLocation);gl.vertexAttribPointer(tintLocation,3,gl.FLOAT,false,12,0);gl.uniform4f(uniforms.color,.25,.68,.57,1);gl.uniform1f(uniforms.surface,1);gl.drawArrays(gl.TRIANGLES,0,lastBuffers.count);
+if(showBaseline){const original=buffers(base);gl.disable(gl.DEPTH_TEST);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);bind(original.edges);gl.disableVertexAttribArray(tintLocation);gl.vertexAttrib3f(tintLocation,0,0,0);gl.uniform1f(uniforms.offset,separate?-.46:0);const wire=(options&&options.wire)||[.95,.42,.06,.65];gl.uniform4f(uniforms.color,wire[0],wire[1],wire[2],wire[3]);gl.uniform1f(uniforms.surface,0);gl.drawArrays(gl.LINES,0,original.edgeCount);gl.disable(gl.BLEND);}
 }};
 };
