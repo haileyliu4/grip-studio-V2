@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Grip Generator</title>
-<link rel="stylesheet" href="assets/app.css?v=20261102-demo2">
+<link rel="stylesheet" href="assets/app.css?v=20261110-insights">
 </head>
 <body data-input-mode="manual">
 <header>
@@ -24,7 +24,7 @@
 <button id="fitBtn" class="fit">Fit</button>
 </div>
 </div>
-<aside id="panel"><section id="secExample">
+<aside id="panel"><div id="inputColumn"><section id="secExample">
 <h2>Current profile</h2>
 <p id="exampleStatus">An example hand profile is loaded automatically. No photos are needed to try it. The baseline example demonstrates zero deformation; the reference hand has not been verified against the uploaded model.</p>
 <p id="photoProgress" role="status"></p>
@@ -124,7 +124,19 @@
 <textarea id="jsonOut" readonly placeholder="Results JSON appears here as you measure."></textarea>
 <p class="hint">Values marked "est." are estimated, not measured; see the estimation note below for how. All measurements are rounded to the nearest whole millimetre. The grip diameter is estimated from your other measurements; if you measured your grip size with a separate tool, enter it in the Generate section and it is used instead.</p>
 </details>
-<section id="validationPanel"><h2>Validate deformation</h2><p>Orange wireframe: original baseline. Solid surface: output. Colored patches identify the inherited adjustment regions. Drag to rotate. The shaded preview shows every triangle.</p><div class="row"><label><input id="showBaseline" type="checkbox" checked> Baseline overlay</label><label><input id="showRegions" type="checkbox" checked> Approximate regions</label><button class="btn ghost" id="resetValidationView">Reset view</button></div><p id="previewStale" class="buildNotice" role="status" hidden>Preview out of date — generate again to match your current inputs. The shape below is the previous build.</p><p id="probeStatus" role="status">Generate a handle to view the comparison.</p><div class="validationStage"><canvas id="validationSurface" aria-hidden="true"></canvas><canvas id="validationCanvas" aria-label="Rotatable baseline and deformed grip overlay"></canvas></div><p class="hint">Region labels use your saved finger/thumb positions and region sizes. They identify calibrated adjustment areas, not measured anatomical joints. Hand length is a limit check; hand breadth has no direct deformation effect. Movement statistics measure corresponding STL vertices, including repeated vertices. This view helps inspect direction; it does not prove ergonomic fit.</p></section><section id="secGen">
+</div><div id="visualColumn"><section id="validationPanel"><h2>3D preview</h2><p>Orange wireframe: original baseline. Solid surface: output. Drag to rotate, scroll to zoom. Surface colour can show the finger regions or where the shape grew and shrank.</p><div class="viewBar"><label>Surface colour <select id="surfaceMode"><option value="">Finger regions</option><option value="heat">Shape change</option><option value="plain">Plain</option></select></label><label><input id="showBaseline" type="checkbox" checked> Baseline overlay</label><label><input id="showRegions" type="checkbox" checked> Region labels</label><label><input id="showSlice" type="checkbox" checked> Slice outline</label></div>
+<div class="viewBar"><span class="btnGroup" role="group" aria-label="Camera view"><button class="btn ghost" id="viewFront">Front</button><button class="btn ghost" id="viewSide">Side</button><button class="btn ghost" id="viewEnd">End</button><button class="btn ghost" id="view3d">3D</button></span><span class="btnGroup" role="group" aria-label="Zoom"><button class="btn ghost" id="viewZoomOut" title="Zoom out" aria-label="Zoom out">&minus;</button><button class="btn ghost" id="viewZoomIn" title="Zoom in" aria-label="Zoom in">+</button></span><button class="btn ghost" id="autoRotate" aria-pressed="false">Auto-rotate</button><button class="btn ghost" id="saveView">Save image</button><button class="btn ghost" id="resetValidationView">Reset view</button></div><p id="previewStale" class="buildNotice" role="status" hidden>Preview out of date — generate again to match your current inputs. The shape below is the previous build.</p><p id="probeStatus" role="status">Generate a handle to view the comparison.</p><div class="validationStage"><canvas id="validationSurface" aria-hidden="true"></canvas><canvas id="validationCanvas" aria-label="Rotatable baseline and deformed grip overlay"></canvas><div id="heatLegend" hidden><span id="heatMin"></span><span class="heatRamp" aria-hidden="true"></span><span id="heatMax"></span><small>thinner · unchanged · thicker</small></div></div><p class="hint">Region labels use your saved finger/thumb positions and region sizes. They identify calibrated adjustment areas, not measured anatomical joints. Hand length is a limit check; hand breadth has no direct deformation effect. Movement statistics measure corresponding STL vertices, including repeated vertices. This view helps inspect direction; it does not prove ergonomic fit.</p></section>
+<div id="insights">
+<section id="tilePanel"><h2>At a glance</h2><div id="statTiles" class="tiles"></div>
+<div class="viewBar"><label>Material <select id="material"><option value="1.24">PLA</option><option value="1.27">PETG</option><option value="1.04">ABS</option><option value="1.21">TPU</option></select></label><label>Fill <input id="infill" type="range" min="10" max="100" step="5" value="20"> <output id="infillValue">20%</output></label></div>
+<p class="hint">Print mass is a rough guide: model volume × material density × fill. It ignores wall thickness and supports, and the source mesh is not guaranteed closed.</p></section>
+<div class="pair">
+<section id="sectionPanel"><h2>Cross-section slice</h2><div class="legend"><span><i style="background:#1baf7a"></i>Yours</span><span><i style="background:#eb6834"></i>Reference</span></div><canvas id="sectionCanvas" aria-label="Cross-section of the grip at the chosen position"></canvas><label class="sliderRow">Position <input id="slicePos" type="range" min="0" max="100" step="0.5" value="50" aria-label="Slice position along the handle in millimetres"></label><p id="sectionReadout" role="status">Generate a handle to see its cross-section.</p></section>
+<section id="profilePanel"><h2>Size along the handle</h2><div class="legend"><span><i style="background:#1baf7a"></i>Yours</span><span><i style="background:#eb6834"></i>Reference</span></div><div id="profileChart"><div id="profilePlot"></div><div id="profileTip" hidden></div></div><p class="hint">Average of the grip's two cross-section extents at each point along the handle. Click or drag on the chart to move the slice.</p></section>
+</div>
+<section id="comparePanel"><h2>Your hand versus the reference hand</h2><div class="legend"><span><i style="background:#2a78d6"></i>Smaller than reference</span><span><i style="background:#e34948"></i>Larger than reference</span></div><div id="compareChart"></div><p class="hint">Bars show the percentage difference for each measurement, capped at ±30%. Hand length is only a limit check and hand breadth does not reshape the grip directly.</p></section>
+</div>
+</div><div id="buildColumn"><section id="secGen">
 <h2>Generate the STL</h2>
 <p>Builds an experimental STL from the measurements above. Mesh repair and validation are required before printing. Right-hand grip: deforms the original HY model relative to the fixed reference hand. Baseline right-hand inputs return the original file unchanged. Adjustment regions use your installed grip-calibration.json. The contact mapping and skeletal pose remain estimates.</p>
 <div class="row">
@@ -163,6 +175,7 @@
 <li>If a finger is present but you skip one of its taps, its length or width is filled with the average of your other measured values and marked "est.".</li>
 </ul>
 </details>
+</div>
 </aside>
 </div>
 <script src="assets/template.js"></script>
@@ -170,10 +183,11 @@
 <script src="assets/source-model.js"></script>
 <script src="assets/calibration.js"></script>
 <script src="assets/deform-source.js"></script>
-<script src="assets/grip-renderer.js?v=20261102b"></script>
+<script src="assets/grip-renderer.js?v=20261110-insights"></script>
 <script src="assets/grip-surface.js"></script>
 <script src="assets/hand-overlay.js?v=20261102b"></script>
-<script src="assets/validation.js?v=20261102-demo2"></script>
+<script src="assets/validation.js?v=20261110-insights"></script>
+<script src="assets/insights.js?v=20261110-insights"></script>
 <script src="assets/hand-edge-assist.js"></script>
 <script src="assets/app.js?v=20261102-demo2"></script>
 </body>
